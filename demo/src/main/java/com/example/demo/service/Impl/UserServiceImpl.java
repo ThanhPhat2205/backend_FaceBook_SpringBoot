@@ -62,33 +62,10 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public UserDto createUserWithAvatar(UserWithAvatarRequest request) {
-        String fileName = null;
-
-        // Xử lý ảnh nếu có upload
-        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            try {
-                File uploadDir = new File(uploadPath);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs();
-                }
-
-                fileName = UUID.randomUUID() + "_" + request.getAvatar().getOriginalFilename();
-                File dest = new File(uploadPath + File.separator + fileName);
-                request.getAvatar().transferTo(dest);
-            } catch (IOException e) {
-                throw new RuntimeException("Lỗi khi lưu ảnh: " + e.getMessage());
-            }
-        }
-
-        // Lưu user
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setBio(request.getBio());
-        user.setAvatarUrl(fileName != null ? "/uploads/" + fileName : null);
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // Mã hóa password
         user.setRole("USER");
-
-        return userMapper.toDto(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        return userMapper.toDto(savedUser);
     }
 }
