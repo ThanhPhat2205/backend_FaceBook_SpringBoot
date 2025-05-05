@@ -2,12 +2,16 @@ package com.example.demo.service.Impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+
+import com.example.demo.config.EmailAlreadyExistsException;
+import com.example.demo.config.UnauthorizedException;
 import com.example.demo.dto.*;
 import com.example.demo.entity.User;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -67,5 +71,39 @@ public class UserServiceImpl implements UserService {
         user.setRole("USER");
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
+    }
+    @Override
+    public UserDto register(RegisterRequest request) {
+        // Check email exists
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new EmailAlreadyExistsException("Email already registered");
+        }
+
+        // Hash password
+        String hashedPassword = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
+
+        // Create user
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(hashedPassword);
+        user.setRole("USER");
+        user.setBio(request.getBio());
+
+        User savedUser = userRepository.save(user);
+        return userMapper.toDto(savedUser);
+    }
+
+    @Override
+    public UserDto login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
+
+        // Verify password
+        if (!BCrypt.checkpw(request.getPassword(), user.getPassword())) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        return userMapper.toDto(user);
     }
 }

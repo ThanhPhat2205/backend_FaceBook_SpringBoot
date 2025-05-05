@@ -51,5 +51,6 @@ public class UserController {
         UserDto createdUser = userService.createUserWithAvatar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
+
 }
 
