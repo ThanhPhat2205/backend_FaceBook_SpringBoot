@@ -32,7 +32,6 @@ public class UserServiceImpl implements UserService {
     private final FileStorageService fileStorageService;
     @Value("${upload.path:uploads}")
     private String uploadPath;
-
     @Override
     public UserDto createUser(UserCreateRequest request) {
         User user = new User();
@@ -45,9 +44,8 @@ public class UserServiceImpl implements UserService {
 
         return userMapper.toDto(userRepository.save(user));
     }
-
     @Override
-    public UserDto updateUser(Long id, UserUpdateRequest request, MultipartFile file) {
+    public UserDto updateUser(Long id, UserUpdateRequest request, MultipartFile avatarFile) {
         User user = userRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException("User not found with id: " + id));
 
@@ -55,8 +53,8 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setBio(request.getBio());
 
-        if (file != null && !file.isEmpty()) {
-            String avatarUrl = fileStorageService.saveFile(file);
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            String avatarUrl = fileStorageService.saveFile(avatarFile);
             user.setAvatarUrl(avatarUrl);
         }
 
@@ -77,30 +75,14 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream().map(userMapper::toDto).collect(Collectors.toList());
     }
-
     @Override
-    public UserDto createUserWithAvatar(UserCreateRequest request, MultipartFile file) {
-        // Check email exists
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new EmailAlreadyExistsException("Email already registered");
-        }
-
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setBio(request.getBio());
+    public UserDto createUserWithAvatar(UserWithAvatarRequest request) {
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // Mã hóa password
         user.setRole("USER");
-
-        if (file != null && !file.isEmpty()) {
-            String avatarUrl = fileStorageService.saveFile(file);
-            user.setAvatarUrl(avatarUrl);
-        }
-
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
     }
-
     @Override
     public UserDto register(RegisterRequest request) {
         // Check email exists

@@ -29,7 +29,6 @@ public class UserController {
     public UserDto createUser(@RequestBody UserCreateRequest request) {
         return userService.createUser(request);
     }
-
     @Operation(summary = "Update user with file upload")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserDto> updateUser(
@@ -38,6 +37,7 @@ public class UserController {
             @RequestPart(value = "file", required = false)
             @Parameter(description = "File to upload", content = @Content(schema = @Schema(type = "string", format = "binary")))
             MultipartFile file) {
+        // Xử lý logic
         return ResponseEntity.ok(userService.updateUser(id, request, file));
     }
 
@@ -55,16 +55,12 @@ public class UserController {
     public List<UserDto> getAllUsers() {
         return userService.getAllUsers();
     }
-
     @Operation(summary = "Create user with avatar")
     @PostMapping(value = "/with-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserDto> createUserWithAvatar(
-            @RequestPart("data") @Valid UserCreateRequest request,
-            @RequestPart(value = "file", required = false)
-            @Parameter(description = "Avatar file to upload", content = @Content(schema = @Schema(type = "string", format = "binary")))
-            MultipartFile file) {
-        UserDto createdUser = userService.createUserWithAvatar(request, file);
+    public ResponseEntity<UserDto> createUserWithAvatar(@ModelAttribute @Valid UserWithAvatarRequest request) {
+        UserDto createdUser = userService.createUserWithAvatar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
+
 }
 

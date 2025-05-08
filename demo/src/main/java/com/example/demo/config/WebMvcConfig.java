@@ -11,7 +11,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Gắn URL "/uploads/**" với thư mục "uploads" thực tế trên ổ đĩa
-        String uploadDir = Paths.get("uploads").toAbsolutePath().toUri().toString();
+        String uploadDir = "file:" + Paths.get("uploads").toAbsolutePath().toString() + "/";
         registry.addResourceHandler("/uploads/**").addResourceLocations(uploadDir);
     }
 }
